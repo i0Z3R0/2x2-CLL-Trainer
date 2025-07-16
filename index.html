@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CLL Sim</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 36px;
+    }
+
+    #toggleButton {
+      margin: 15px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #caseControls {
+      display: none;
+      margin-bottom: 20px;
+    }
+
+    .section {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      margin: 20px auto;
+      width: 90%;
+      max-width: 1000px;
+      background-color: #ffffff;
+    }
+
+    .section-title {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .section-toggle {
+      margin-bottom: 10px;
+    }
+
+    .caseList {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .caseItem {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      width: 120px;
+      cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .caseItem.selected {
+      background-color: #e0f7ff;
+      border-color: #00bcd4;
+    }
+
+    .caseItem img {
+      margin-top: 5px;
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .caseItem input[type="checkbox"] {
+      display: none;
+    }
+
+    #caseImg {
+      margin-top: 30px;
+      width: 250px;
+      height: 250px;
+      border: 2px solid #ccc;
+      display: none;
+    }
+
+    #previewTitle {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 20px;
+      margin-top: 30px;
+    }
+
+    #debugOutput {
+      margin-top: 20px;
+      font-family: monospace;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>CLL Sim</h1>
+
+  <button id="toggleButton" onclick="toggleCaseList()">Show/Hide Case List</button>
+
+  <div id="caseControls"></div>
+
+  <button onclick="getRandomCase()">Get Random Case</button>
+
+  <div id="previewTitle">CLL Sim Preview</div>
+  <img id="caseImg" alt="Random Case Image" />
+
+  <div id="debugOutput"></div>
+
+  <script>
+    const caseSections = {
+      'AS': 6,
+      'H': 4,
+      'L': 6,
+      'PI': 6,
+      'S': 6,
+      'T': 6,
+      'U': 6
+    };
+
+    let previousCase = null;
+    const container = document.getElementById('caseControls');
+    const allCases = {};
+
+    for (const [section, count] of Object.entries(caseSections)) {
+      const sectionDiv = document.createElement('div');
+      sectionDiv.className = 'section';
+
+      const sectionTitle = document.createElement('div');
+      sectionTitle.className = 'section-title';
+      sectionTitle.textContent = section;
+
+      const toggle = document.createElement('input');
+      toggle.type = 'checkbox';
+      toggle.className = 'section-toggle';
+      toggle.id = `toggle-${section}`;
+
+      const toggleLabel = document.createElement('label');
+      toggleLabel.htmlFor = toggle.id;
+      toggleLabel.textContent = `Select All ${section}`;
+
+      toggle.addEventListener('change', () => {
+        const checkboxes = sectionDiv.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+          cb.checked = toggle.checked;
+          cb.parentElement.classList.toggle('selected', toggle.checked);
+        });
+      });
+
+      const header = document.createElement('div');
+      header.appendChild(toggle);
+      header.appendChild(toggleLabel);
+
+      const caseList = document.createElement('div');
+      caseList.className = 'caseList';
+
+      for (let i = 1; i <= count; i++) {
+        const caseName = `${section}${i}`;
+        const imgPath = `images/${caseName}.png`;
+        allCases[caseName] = imgPath;
+
+        const item = document.createElement('div');
+        item.className = 'caseItem';
+        item.dataset.case = caseName;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = caseName;
+
+        const label = document.createElement('span');
+        label.textContent = caseName;
+
+        const img = document.createElement('img');
+        img.src = imgPath;
+        img.alt = `${caseName} preview`;
+
+        item.appendChild(checkbox);
+        item.appendChild(label);
+        item.appendChild(img);
+        caseList.appendChild(item);
+
+        item.addEventListener('click', () => {
+          checkbox.checked = !checkbox.checked;
+          item.classList.toggle('selected', checkbox.checked);
+        });
+      }
+
+      sectionDiv.appendChild(sectionTitle);
+      sectionDiv.appendChild(header);
+      sectionDiv.appendChild(caseList);
+      container.appendChild(sectionDiv);
+    }
+
+    function toggleCaseList() {
+      const controls = document.getElementById('caseControls');
+      const isHidden = window.getComputedStyle(controls).display === 'none';
+      controls.style.display = isHidden ? 'block' : 'none';
+    }
+
+    function getRandomCase() {
+  const selected = Array.from(document.querySelectorAll('.caseItem input[type="checkbox"]:checked'))
+    .map(cb => cb.value);
+
+  if (selected.length === 0) {
+    alert('Please select at least one case.');
+    return;
+  }
+
+  let available = selected;
+  if (selected.length > 1 && previousCase) {
+    available = selected.filter(c => c !== previousCase);
+  }
+
+  const chosen = available[Math.floor(Math.random() * available.length)];
+  previousCase = chosen;
+
+  const imgElem = document.getElementById('caseImg');
+  imgElem.src = allCases[chosen];
+  imgElem.style.display = 'block';
+
+  document.getElementById('debugOutput').textContent = `Selected case: ${chosen}.png`;
+}
+
+
+    document.getElementById('caseImg').style.display = 'none';
+  </script>
+
+</body>
+</html>
