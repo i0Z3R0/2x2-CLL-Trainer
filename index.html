@@ -200,7 +200,7 @@
       H4: { hint: "F bar front", algorithm: "U F R2 U' R2 U R2 U R2 F'" },
 
       PI1: { hint: "", algorithm: "F (R U R' U') 2 F'" },
-      PI2: { hint: "", algorithm: "R' U' (R' F R F') R U' R' U2 R" },
+      PI2: { hint: "", algorithm: "U' R' U' (R' F R F') R U' R' U2 R" },
       PI3: { hint: "Out, insert lefty", algorithm: "R U' R' F L' U L U L' U L" },
       PI4: { hint: "Inverse of F R2s", algorithm: "U F R2 U' R2 U R2 U R2 F'" },
       PI5: { hint: "Inverse of small l oll", algorithm: "R U2 R' U' R U R' U2 (R' F R F')" },
@@ -246,52 +246,85 @@
     const container = document.getElementById('caseControls');
 
     // Create sections and cases, all selected by default
-    for (const [section, count] of Object.entries(caseSections)) {
-      const sectionDiv = document.createElement('div');
-      sectionDiv.className = 'section';
+    // Create sections and cases, all selected by default
+for (const [section, count] of Object.entries(caseSections)) {
+  const sectionDiv = document.createElement('div');
+  sectionDiv.className = 'section';
 
-      const sectionTitle = document.createElement('div');
-      sectionTitle.className = 'section-title';
-      sectionTitle.textContent = section;
+  const sectionHeader = document.createElement('div');
+  sectionHeader.style.display = 'flex';
+  sectionHeader.style.justifyContent = 'space-between';
+  sectionHeader.style.alignItems = 'center';
+  sectionHeader.style.marginBottom = '8px';
 
-      const caseList = document.createElement('div');
-      caseList.className = 'caseList';
+  const sectionTitle = document.createElement('div');
+  sectionTitle.className = 'section-title';
+  sectionTitle.textContent = section;
 
-      for (let i = 1; i <= count; i++) {
-        const caseName = `${section}${i}`;
-        const imgPath = allCases[caseName];
+  const toggleAllBtn = document.createElement('button');
+  toggleAllBtn.textContent = 'Toggle All';
+  toggleAllBtn.style.padding = '6px 12px';
+  toggleAllBtn.style.fontSize = '12px';
+  toggleAllBtn.style.cursor = 'pointer';
+  toggleAllBtn.style.borderRadius = '5px';
+  toggleAllBtn.style.border = '1px solid #00bcd4';
+  toggleAllBtn.style.backgroundColor = '#e0f7ff';
 
-        const item = document.createElement('div');
-        item.className = 'caseItem selected';
-        item.dataset.case = caseName;
+  sectionHeader.appendChild(sectionTitle);
+  sectionHeader.appendChild(toggleAllBtn);
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.value = caseName;
-        checkbox.checked = true;
+  const caseList = document.createElement('div');
+  caseList.className = 'caseList';
 
-        const label = document.createElement('span');
-        label.textContent = caseName;
+  for (let i = 1; i <= count; i++) {
+    const caseName = `${section}${i}`;
+    const imgPath = allCases[caseName];
 
-        const img = document.createElement('img');
-        img.src = imgPath;
-        img.alt = `${caseName} preview`;
+    const item = document.createElement('div');
+    item.className = 'caseItem selected';
+    item.dataset.case = caseName;
 
-        item.appendChild(checkbox);
-        item.appendChild(label);
-        item.appendChild(img);
-        caseList.appendChild(item);
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = caseName;
+    checkbox.checked = true;
 
-        item.addEventListener('click', () => {
-          checkbox.checked = !checkbox.checked;
-          item.classList.toggle('selected', checkbox.checked);
-        });
-      }
+    const label = document.createElement('span');
+    label.textContent = caseName;
 
-      sectionDiv.appendChild(sectionTitle);
-      sectionDiv.appendChild(caseList);
-      container.appendChild(sectionDiv);
-    }
+    const img = document.createElement('img');
+    img.src = imgPath;
+    img.alt = `${caseName} preview`;
+
+    item.appendChild(checkbox);
+    item.appendChild(label);
+    item.appendChild(img);
+    caseList.appendChild(item);
+
+    item.addEventListener('click', () => {
+      checkbox.checked = !checkbox.checked;
+      item.classList.toggle('selected', checkbox.checked);
+    });
+  }
+
+  toggleAllBtn.addEventListener('click', () => {
+    const allItems = caseList.querySelectorAll('.caseItem');
+    const anyUnchecked = Array.from(allItems).some(item =>
+      !item.querySelector('input[type="checkbox"]').checked
+    );
+
+    allItems.forEach(item => {
+      const checkbox = item.querySelector('input[type="checkbox"]');
+      checkbox.checked = anyUnchecked;
+      item.classList.toggle('selected', checkbox.checked);
+    });
+  });
+
+  sectionDiv.appendChild(sectionHeader);
+  sectionDiv.appendChild(caseList);
+  container.appendChild(sectionDiv);
+}
+
 
     function toggleCaseList() {
       const controls = document.getElementById('caseControls');
