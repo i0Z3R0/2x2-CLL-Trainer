@@ -57,10 +57,6 @@
       margin-bottom: 5px;
     }
 
-    .section-toggle {
-      margin-bottom: 10px;
-    }
-
     .caseList {
       display: flex;
       flex-wrap: wrap;
@@ -110,7 +106,7 @@
     #caseImg {
       max-width: 100%;
       max-height: 100%;
-      display: none; /* Hide initially */
+      display: none;
       object-fit: contain;
     }
 
@@ -120,25 +116,24 @@
       margin-top: 30px;
     }
 
-    #debugWrapper {
-      margin-top: 20px;
-      font-family: monospace;
-      color: #555;
+    .toggleWrapper {
+      margin-top: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      user-select: none;
+      font-family: monospace;
     }
 
-    #debugOutput {
-      display: inline-block;
-    }
-
-    input#showDebugToggle {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
+    #debugOutput, #hintOutput, #algoOutput {
+      margin-top: 10px;
+      font-family: monospace;
+      color: #555;
+      white-space: pre-wrap;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
     }
   </style>
 </head>
@@ -158,27 +153,99 @@
     <img id="caseImg" alt="Random Case Image" />
   </div>
 
-  <div id="debugWrapper">
+  <div class="toggleWrapper">
+    <input type="checkbox" id="showHintToggle" checked />
+    <label for="showHintToggle">Show Hint</label>
+  </div>
+  <div id="hintOutput"></div>
+
+  <div class="toggleWrapper">
+    <input type="checkbox" id="showAlgoToggle" checked />
+    <label for="showAlgoToggle">Show Algorithm</label>
+  </div>
+  <div id="algoOutput"></div>
+
+  <div class="toggleWrapper">
     <input type="checkbox" id="showDebugToggle" checked />
     <label for="showDebugToggle">Show Debug Case Name</label>
-    <div id="debugOutput"></div>
   </div>
+  <div id="debugOutput"></div>
 
   <script>
+    // Reordered sections per your request
     const caseSections = {
-      'AS': 6,
       'H': 4,
-      'L': 6,
       'PI': 6,
-      'S': 6,
+      'L': 6,
+      'U': 6,
       'T': 6,
-      'U': 6
+      'S': 6,
+      'AS': 6
+    };
+
+    // Build allCases map with image paths
+    const allCases = {};
+    for (const [section, count] of Object.entries(caseSections)) {
+      for (let i = 1; i <= count; i++) {
+        const caseName = `${section}${i}`;
+        allCases[caseName] = `images/${caseName}.png`;
+      }
+    }
+
+    // Hints and Algorithms scaffold, same order as above
+    const caseHints = {
+      H1: { hint: "Break bars", algorithm: "R2 U2 R' U2 R2" },
+      H2: { hint: "Double niklas", algorithm: "(U/U') (R U' R' F R' F' R) 2" },
+      H3: { hint: "Along bar side", algorithm: "(R U R' U) R U R' (F R' F' R)" },
+      H4: { hint: "F bar front", algorithm: "U F R2 U' R2 U R2 U R2 F'" },
+
+      PI1: { hint: "", algorithm: "F (R U R' U') 2 F'" },
+      PI2: { hint: "", algorithm: "R' U' (R' F R F') R U' R' U2 R" },
+      PI3: { hint: "Out, insert lefty", algorithm: "R U' R' F L' U L U L' U L" },
+      PI4: { hint: "Inverse of F R2s", algorithm: "U F R2 U' R2 U R2 U R2 F'" },
+      PI5: { hint: "Inverse of small l oll", algorithm: "R U2 R' U' R U R' U2 (R' F R F')" },
+      PI6: { hint: "Small l oll", algorithm: "(F R' F' R) U2 R U' R' U R U2 R'" },
+
+      L1: { hint: "Opp top = all opp then easy", algorithm: "U F' (R U R' U') R' F R" },
+      L2: { hint: "Opp top = all opp then easy", algorithm: "(F R' F' R) (U R U' R')" },
+      L3: { hint: "Square oll, match the adjacents", algorithm: "R U2 R2 F R F' R U2 R'" },
+      L4: { hint: "A perm similar start (right opp)", algorithm: "U R' U R' U2 R U' R' U R U' R2" },
+      L5: { hint: "T perm other insert", algorithm: "R U R' U' R' F R2 U' R' U R U R' F'" },
+      L6: { hint: "U' R' F' t perm alt ending", algorithm: "U' R' F' R U R' U' R' F R2 U' R' U2 R" },
+
+      U1: { hint: "fruruf easy", algorithm: "F (R U R' U') F'" },
+      U2: { hint: "R2 along bar, insert then the back", algorithm: "R2 F2 R U R' F R2 U2 R' U' R" },
+      U3: { hint: "double block = double f2", algorithm: "R’ U’ F2 U’ R U R’ U F2 R" },
+      U4: { hint: "hedge other side insert ", algorithm: "(F R' F' R) U' R U' R' U2 R U' R' " },
+      U5: { hint: "auf then top match when up", algorithm: "U R U' R2 F R F' R U R' U' R U R'" },
+      U6: { hint: "auf then sledge downwards", algorithm: "U R' U R' F R F' R U2 R' U R" },
+
+      T1: { hint: "", algorithm: "" },
+      T2: { hint: "", algorithm: "" },
+      T3: { hint: "", algorithm: "" },
+      T4: { hint: "", algorithm: "" },
+      T5: { hint: "", algorithm: "" }, 
+      T6: { hint: "", algorithm: "" },
+
+      S1: { hint: "", algorithm: "" },
+      S2: { hint: "", algorithm: "" },
+      S3: { hint: "", algorithm: "" },
+      S4: { hint: "", algorithm: "" },
+      S5: { hint: "", algorithm: "" },
+      S6: { hint: "", algorithm: "" },
+
+      AS1: { hint: "", algorithm: "" },
+      AS2: { hint: "", algorithm: "" },
+      AS3: { hint: "", algorithm: "" },
+      AS4: { hint: "", algorithm: "" },
+      AS5: { hint: "", algorithm: "" },
+      AS6: { hint: "", algorithm: "" },
     };
 
     let previousCase = null;
     const container = document.getElementById('caseControls');
-    const allCases = {};
 
+    // Create sections and cases, all selected by default
     for (const [section, count] of Object.entries(caseSections)) {
       const sectionDiv = document.createElement('div');
       sectionDiv.className = 'section';
@@ -187,42 +254,21 @@
       sectionTitle.className = 'section-title';
       sectionTitle.textContent = section;
 
-      const toggle = document.createElement('input');
-      toggle.type = 'checkbox';
-      toggle.className = 'section-toggle';
-      toggle.id = `toggle-${section}`;
-
-      const toggleLabel = document.createElement('label');
-      toggleLabel.htmlFor = toggle.id;
-      toggleLabel.textContent = `Select All ${section}`;
-
-      toggle.addEventListener('change', () => {
-        const checkboxes = sectionDiv.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(cb => {
-          cb.checked = toggle.checked;
-          cb.parentElement.classList.toggle('selected', toggle.checked);
-        });
-      });
-
-      const header = document.createElement('div');
-      header.appendChild(toggle);
-      header.appendChild(toggleLabel);
-
       const caseList = document.createElement('div');
       caseList.className = 'caseList';
 
       for (let i = 1; i <= count; i++) {
         const caseName = `${section}${i}`;
-        const imgPath = `images/${caseName}.png`;
-        allCases[caseName] = imgPath;
+        const imgPath = allCases[caseName];
 
         const item = document.createElement('div');
-        item.className = 'caseItem';
+        item.className = 'caseItem selected';
         item.dataset.case = caseName;
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.value = caseName;
+        checkbox.checked = true;
 
         const label = document.createElement('span');
         label.textContent = caseName;
@@ -243,7 +289,6 @@
       }
 
       sectionDiv.appendChild(sectionTitle);
-      sectionDiv.appendChild(header);
       sectionDiv.appendChild(caseList);
       container.appendChild(sectionDiv);
     }
@@ -271,28 +316,44 @@
       const chosen = available[Math.floor(Math.random() * available.length)];
       previousCase = chosen;
 
+      // Update image
       const imgElem = document.getElementById('caseImg');
       imgElem.src = allCases[chosen];
-      imgElem.style.display = 'block';  // Show image
+      imgElem.style.display = 'block';
 
+      // Update debug
       document.getElementById('debugOutput').textContent = `Selected case: ${chosen}.png`;
 
-      // Hide the case list automatically after selection
+      // Update hint
+      const hint = caseHints[chosen]?.hint || '(No hint available)';
+      document.getElementById('hintOutput').textContent = hint;
+
+      // Update algorithm
+      const algo = caseHints[chosen]?.algorithm || '(No algorithm available)';
+      document.getElementById('algoOutput').textContent = algo;
+
+      // Hide list automatically
       document.getElementById('caseControls').style.display = 'none';
     }
 
-    // Hide image on page load (just in case)
-    document.getElementById('caseImg').style.display = 'none';
-
-    // Show/hide debug output text depending on checkbox
-    const debugToggle = document.getElementById('showDebugToggle');
-    const debugOutput = document.getElementById('debugOutput');
-    debugToggle.addEventListener('change', () => {
-      debugOutput.style.display = debugToggle.checked ? 'inline-block' : 'none';
+    // Toggle outputs visibility based on checkboxes
+    document.getElementById('showDebugToggle').addEventListener('change', e => {
+      document.getElementById('debugOutput').style.display = e.target.checked ? 'block' : 'none';
     });
 
-    // Initially set debug output visible or hidden depending on checkbox state
-    debugOutput.style.display = debugToggle.checked ? 'inline-block' : 'none';
+    document.getElementById('showHintToggle').addEventListener('change', e => {
+      document.getElementById('hintOutput').style.display = e.target.checked ? 'block' : 'none';
+    });
+
+    document.getElementById('showAlgoToggle').addEventListener('change', e => {
+      document.getElementById('algoOutput').style.display = e.target.checked ? 'block' : 'none';
+    });
+
+    // Show all outputs by default
+    document.getElementById('debugOutput').style.display = 'block';
+    document.getElementById('hintOutput').style.display = 'block';
+    document.getElementById('algoOutput').style.display = 'block';
+
   </script>
 
 </body>
